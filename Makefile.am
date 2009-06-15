@@ -1,3 +1,3 @@
 bin_PROGRAMS = fpot
-fpot_SOURCES = fpot.c
+fpot_SOURCES = fpot.c inpanrd.c
 

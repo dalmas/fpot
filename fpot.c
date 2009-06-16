@@ -189,20 +189,32 @@ int getdth()
     }
   }
 
+#if 1
+  for (j = 0; j < (npv+npq); j++) {
+    printf("%+0.6f ", dp[j]);
+    for (n = 0; n < (npv+npq); n++) {
+      printf("%+0.6f ", b1[j][n]);
+    }
+    printf("\n");
+  }
+#endif
+
   for (i = (npv+npq) - 1; i >= 0; i--) {
 
     index = get_index(b1idx[i]);
     
     r = 0.;
     
-    for (j = i; j < (npv+npq) - 1; j++) {
-      r += b1[i][j] * dp[j];
+    for (j = (npv+npq) - 1; j > i; j--) {
+      r += b1[i][j] * dth[get_index(b1idx[j])];
+//      printf("%i %i %f = %f * %f (%f)\n", i, j, (b1[i][j] * dth[get_index(b1idx[j])]), b1[i][j], dth[get_index(b1idx[j])], r);
     }
-    
+
+    printf("%f = %f - %f\n", (dp[i] - r), dp[i], r);
     r = dp[i] - r;
 
     dth[index] = r / b1[i][i];
-//    printf("dth[%i] %f\n", index, dth[index]);
+    printf("dth[%i] = %f %f / %f\n", index, dth[index], r, b1[i][i]);
   }
 
   return 0;
@@ -252,7 +264,7 @@ int getdv()
     }
   }
 
-#if 0
+#if 1
   for (j = 0; j < npq; j++) {
     printf("%+0.6f ", dq[j]);
     for (n = 0; n < npq; n++) {
@@ -268,15 +280,15 @@ int getdv()
 
     r = 0.;
     
-    for (j = i; j < npq - 1; j++) {
-      r += b2[i][j] * dv[j];
+    for (j = npq - 1; j > i; j--) {
+      r += b2[i][j] * dv[get_index(b2idx[j])];
     }
-    
+
     r = dq[i] - r;
     
     dv[index] = r / b2[i][i];
 
-//    printf("dv[%i] = %f %f / %f\n", index, dv[index], r, b2[i][i]);
+    printf("dv[%i] = %f %f / %f\n", index, dv[index], r, b2[i][i]);
 
   }
 

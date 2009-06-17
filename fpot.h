@@ -7,13 +7,6 @@
 #define MNM_LENGHT 4
 #define NAME_LENGHT 12
 
-char titu[LINE_LENGHT];
-
-double tepa;
-double tepr;
-int base;
-int acit;
-
 typedef struct {
   int id;
   int type;
@@ -34,9 +27,7 @@ typedef struct {
   double cf;
 } dbar_t;
 
-dbar_t dbar[LENGHT];
-
-struct dlin_t {
+typedef struct {
   int from;
   int to;
   double r;
@@ -45,25 +36,23 @@ struct dlin_t {
   double tap;
   double tmn;
   double tmx;
-} dlin[LENGHT];
-
-int nbar;
-int nlin;
-int npv;
-int npq;
-double yg[LENGHT][LENGHT];
-double yb[LENGHT][LENGHT];
-int b1idx[LENGHT];
-double b1[LENGHT][LENGHT];
-int b2idx[LENGHT];
-double b2[LENGHT][LENGHT];
-double voltage[LENGHT];
-double phase[LENGHT];
-double dp[LENGHT];
-double dq[LENGHT];
-double dv[LENGHT];
-double dth[LENGHT];
+} dlin_t;
 
 #define pow2(x) ((x) * (x))
+
+extern char titu[LINE_LENGHT];
+
+extern double tepa;
+extern double tepr;
+extern int base;
+extern int acit;
+
+extern dbar_t dbar[LENGHT];
+extern dlin_t dlin[LENGHT];
+
+extern int nbar;
+extern int nlin;
+extern int npv;
+extern int npq;
 
 int input_data (FILE * fd);

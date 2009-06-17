@@ -6,6 +6,30 @@
 #include "config.h"
 #include "fpot.h"
 
+char titu[LINE_LENGHT];
+double tepa;
+double tepr;
+int base;
+int acit;
+dbar_t dbar[LENGHT];
+dlin_t dlin[LENGHT];
+int nbar;
+int nlin;
+int npv;
+int npq;
+double yg[LENGHT][LENGHT];
+double yb[LENGHT][LENGHT];
+int b1idx[LENGHT];
+double b1[LENGHT][LENGHT];
+int b2idx[LENGHT];
+double b2[LENGHT][LENGHT];
+double voltage[LENGHT];
+double phase[LENGHT];
+double dp[LENGHT];
+double dq[LENGHT];
+double dv[LENGHT];
+double dth[LENGHT];
+
 int print_usage()
 {
   printf("%s\n\n", PACKAGE_STRING);
@@ -28,6 +52,7 @@ int get_index(int id)
   return -1;
 }
 
+
 int formyb()
 {
   int index, i, j;
@@ -44,15 +69,15 @@ int formyb()
     from = get_index(dlin[index].from);
     to = get_index(dlin[index].to);
 
-#if 0
+#if 1
     printf("from %i to %i ", from, to);
     printf("dlin i: %i r: %f x: %f\n", index ,dlin[index].r, dlin[index].x);
 #endif
 
     den = (pow2(dlin[index].r) + pow2(dlin[index].x));
     g = dlin[index].r / den;
-    b = dlin[index].x / den;
-    sh = 0.5 * dlin[index].b / base;
+    b = -dlin[index].x / den;
+    sh = 0.5 * dlin[index].b;
     yg[from][from] += g;
     yb[from][from] += b + sh;
     yg[to][to] += g;
@@ -65,12 +90,12 @@ int formyb()
     
   }
 
-#if 0
+#if 1
   {
     int i, j;
 
-    for (i = 0; i < (npv+npq); i++) {
-      for (j = 0; j < (npv+npq); j++) {
+    for (i = 0; i < nbar; i++) {
+      for (j = 0; j < nbar; j++) {
         if ((yg[i][j] != 0.) || (yb[i][j] != 0.)) {
           printf("(%+.3lf %+.3lfj) ", yg[i][j], yb[i][j]);
         }
@@ -118,7 +143,7 @@ int formb()
 
   for (row = 0; row < npq; row++) {
     for (col = 0; col < npq; col++) {
-      b2[row][col] = -yb[get_index(b1idx[row])][get_index(b1idx[col])];
+      b2[row][col] = -yb[get_index(b2idx[row])][get_index(b2idx[col])];
     }
   }
 
@@ -133,7 +158,7 @@ int formb()
   printf("\n");
   for (row = 0; row < npq; row++) {
     for (col = 0; col < npq; col++) {
-      printf("%+0.6f ", b1[row][col]);
+      printf("%+0.6f ", b2[row][col]);
     }
     printf("\n");
   }
@@ -147,19 +172,18 @@ int updatedp()
   int index, i, k;
   double tetha, s;
 
-  for (i = 0; i < (npq+npv); i++) {
-
-    index = get_index(b1idx[i]);
+  for (i = 0; i < nbar; i++) {
 
     s = 0;
     for (k = 0; k < nbar; k++) {
-      tetha = phase[index] - phase[k];
-//      printf("%i %i %f\n", index, k, (yg[index][k] * cos(tetha)) + (yb[index][k] * sin(tetha)) * voltage[k]);
-      
-      s += (yg[index][k] * cos(tetha)) + (yb[index][k] * sin(tetha)) * voltage[k];
+      tetha = phase[i] - phase[k];
+      s += (yg[i][k] * cos(tetha)) + (yb[i][k] * sin(tetha)) * voltage[k];
+//      printf("P = ((%f * %f) + (%f * %f)) * %f = %f %f\n", yg[i][k], cos(tetha), yb[i][k], sin(tetha), voltage[k], (yg[i][k] * cos(tetha)) + (yb[i][k] * sin(tetha)) * voltage[k], s);
+  
     }
-    dp[i] = (((dbar[index].pg - dbar[index].ql) / base) - (voltage[i] * s)) / voltage[i];
-//    printf("dp[%i] %f %f %f %f %f\n", i, dp[i], dbar[index].pg, dbar[b1idx[i]].pl, voltage[i], s);
+    dp[i] = (((dbar[i].pg - dbar[i].ql) / base) - (voltage[i] * s)) / voltage[i];
+
+    printf("dp[%i] %f P %f\n", i, dp[i], s * base);
   }
 
   return 0;
@@ -170,9 +194,15 @@ int getdth()
   int index;
   int n, i, j;
   double m, r;
+  double b[LENGHT];
   
   memset(dth, 0, sizeof(dth));
 
+  for (i = 0; i < (npv+npq); i++) {
+    index = get_index(b1idx[i]);
+    b[i] = dp[index];
+  }
+  
   for (j = 0; j < (npv+npq); j++) {
 
     for (n = j + 1; n < (npv+npq); n++) {
@@ -184,14 +214,14 @@ int getdth()
         for (i = j; i < (npv+npq); i++) {
           b1[n][i] += m * b1[j][i];
         }
-        dp[n] += m * dp[j];
+        b[n] += m * b[j];
       }
     }
   }
 
-#if 1
+#if 0
   for (j = 0; j < (npv+npq); j++) {
-    printf("%+0.6f ", dp[j]);
+    printf("%+0.6f ", b[j]);
     for (n = 0; n < (npv+npq); n++) {
       printf("%+0.6f ", b1[j][n]);
     }
@@ -207,14 +237,12 @@ int getdth()
     
     for (j = (npv+npq) - 1; j > i; j--) {
       r += b1[i][j] * dth[get_index(b1idx[j])];
-//      printf("%i %i %f = %f * %f (%f)\n", i, j, (b1[i][j] * dth[get_index(b1idx[j])]), b1[i][j], dth[get_index(b1idx[j])], r);
     }
 
-    printf("%f = %f - %f\n", (dp[i] - r), dp[i], r);
-    r = dp[i] - r;
+    r = b[i] - r;
 
     dth[index] = r / b1[i][i];
-    printf("dth[%i] = %f %f / %f\n", index, dth[index], r, b1[i][i]);
+//    printf("dth[%i] = %f %f / %f\n", index, dth[index], r, b1[i][i]);
   }
 
   return 0;
@@ -225,16 +253,17 @@ int updatedq()
   int index, i, k;
   double tetha, s;
 
-  for (i = 0; i < npq; i++) {
-
-    index = get_index(b2idx[i]);
+  for (i = 0; i < nbar; i++) {
 
     s = 0;
     for (k = 0; k < nbar; k++) {
-      tetha = phase[index] - phase[k];
-      s += (yg[index][k] * sin(tetha)) + (yb[index][k] * cos(tetha)) * voltage[k];
-    }
-    dq[i] = (((dbar[index].qg - dbar[index].ql) / base) - (voltage[i] * s)) / voltage[i];
+      tetha = phase[i] - phase[k];
+      s += (yg[i][k] * sin(tetha)) + (yb[i][k] * cos(tetha)) * voltage[k];
+    }    
+
+    dq[i] = (((dbar[i].qg - dbar[i].ql) / base) - (voltage[i] * s)) / voltage[i];
+      
+    printf("dq[%i] %f Q %f\n", i, dq[i], s * base);
   }
 
   return 0;
@@ -245,8 +274,14 @@ int getdv()
   int index;
   int n, i, j;
   double m, r;
+  double b[LENGHT];
   
   memset(dv, 0, sizeof(dv));
+
+  for (i = 0; i < npq; i++) {
+    index = get_index(b2idx[i]);
+    b[i] = dv[index];
+  }
 
   for (j = 0; j < npq; j++) {
 
@@ -259,14 +294,14 @@ int getdv()
         for (i = j; i < npq; i++) {
           b2[n][i] += m * b2[j][i];
         }
-        dv[n] += m * dv[j];
+        b[n] += m * b[j];
       }
     }
   }
 
-#if 1
+#if 0
   for (j = 0; j < npq; j++) {
-    printf("%+0.6f ", dq[j]);
+    printf("%+0.6f ", b[j]);
     for (n = 0; n < npq; n++) {
       printf("%+0.6f ", b2[j][n]);
     }
@@ -287,9 +322,7 @@ int getdv()
     r = dq[i] - r;
     
     dv[index] = r / b2[i][i];
-
-    printf("dv[%i] = %f %f / %f\n", index, dv[index], r, b2[i][i]);
-
+//    printf("dv[%i] = %f %f / %f\n", index, dv[index], r, b2[i][i]);
   }
 
   return 0;
@@ -301,6 +334,7 @@ int main (int argc, char **argv)
   FILE *fd;
   int index, i;
   int iter;
+  int conv;
   
   if (argc != 2) {
     print_usage();
@@ -329,8 +363,9 @@ int main (int argc, char **argv)
   for (index = 0; index < nbar; index++) {
     voltage[index] = dbar[index].voltage;
     phase[index] = dbar[index].phase;
-//    printf("%i %f %f\n", index, voltage[index], phase[index]);
+    printf("%i %f %f\n", index, voltage[index], phase[index]);
   }
+  printf("\n");
 
   iter = 0;
 
@@ -340,16 +375,38 @@ int main (int argc, char **argv)
     
     updatedp();
 
+    conv = 1;
+    for (i = 0; i < (npv+npq); i++) {
+      index = get_index(b1idx[i]);
+//      printf("dp %f %f\n", fabs(dp[index]), tepa);
+      if (fabs(dp[index]) > tepa) {
+        conv = 0;
+      }
+    }
+    if (conv) {
+      printf("potencia ativa convergiu na iteracao %i\n", iter);
+    }    
+
     getdth();
 
     for (i = 0; i < (npv+npq); i++) {
       index = get_index(b1idx[i]);
-//      printf("p[%i] %f %f\n", index, phase[index], dth[index]);
       phase[index] += dth[index];
-
     }
 
     updatedq();
+
+    conv = 1;
+    for (i = 0; i < npq; i++) {
+      index = get_index(b2idx[i]);
+//      printf("dq %f %f\n", fabs(dq[index]), tepr);
+      if (fabs(dq[index]) > tepr) {
+        conv = 0;
+      }
+    }
+    if (conv) {
+      printf("potencia reativa convergiu na iteracao %i\n", iter);
+    }
 
     getdv();
 
@@ -361,9 +418,9 @@ int main (int argc, char **argv)
     for (i = 0; i < nbar; i++) {
       printf("%i %f %f\n", i, voltage[i], phase[i]);
     }
-    printf("\n");
-    
-  } while (iter < 1);
+    printf("iter = %i\n\n", iter);
+
+  } while (conv || (iter < 10));
   
   return 0;
 }

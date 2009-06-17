@@ -313,7 +313,7 @@ int input_data (FILE * fd)
           dlin[nlin].r = 0.;
         }
         else {
-          dlin[nlin].r = atof(data);
+          dlin[nlin].r = 0.01 * atof(data);
         }
 
         sptr = line + 23;
@@ -322,7 +322,7 @@ int input_data (FILE * fd)
           dlin[nlin].x = 0.;
         }
         else {
-          dlin[nlin].x = atof(data);
+          dlin[nlin].x = 0.01 * atof(data);
         }
 
         sptr = line + 29;
@@ -331,7 +331,7 @@ int input_data (FILE * fd)
           dlin[nlin].b = 0.;
         }
         else {
-          dlin[nlin].b = atof(data);
+          dlin[nlin].b = atof(data) / base;
         }
 
         sptr = line + 35;

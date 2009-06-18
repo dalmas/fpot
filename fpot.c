@@ -258,7 +258,8 @@ int updatedq()
     s = 0;
     for (k = 0; k < nbar; k++) {
       tetha = phase[i] - phase[k];
-      s += (yg[i][k] * sin(tetha)) + (yb[i][k] * cos(tetha)) * voltage[k];
+      s += (yg[i][k] * sin(tetha)) - (yb[i][k] * cos(tetha)) * voltage[k];
+//      printf("Q = ((%f * %f) - (%f * %f)) * %f = %f %f\n", yg[i][k], sin(tetha), yb[i][k], cos(tetha), voltage[k], (yg[i][k] * sin(tetha)) - (yb[i][k] * cos(tetha)) * voltage[k], s);
     }    
 
     dq[i] = (((dbar[i].qg - dbar[i].ql) / base) - (voltage[i] * s)) / voltage[i];

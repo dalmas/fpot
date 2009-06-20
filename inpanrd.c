@@ -16,6 +16,11 @@ int input_data (FILE * fd)
   char *sptr;
   char data[13];
   
+  base = 100.;
+  tepa = 1. / base;
+  tepr = 1. / base;
+  acit = 30;
+
   while (!feof(fd)) {
 
     if (fgets(line, LINE_LENGHT, fd) == NULL) {
@@ -187,7 +192,7 @@ int input_data (FILE * fd)
         strncpy(data, sptr, 5); data[5] = 0;
         if (strncmp(data, "     ", 5) == 0) {
           if (dbar[nbar].type == 2) {
-            dbar[nbar].qm = -9999.;
+            dbar[nbar].qm = 9999.;
           }
           else {
             dbar[nbar].qm = 0.;
@@ -233,6 +238,8 @@ int input_data (FILE * fd)
           sscanf(data, "%lf", &dbar[nbar].sh);
         }
 
+        dbar[nbar].sh /= base;
+        
         sptr = line + 70;
         strncpy(data, sptr, 2); data[2] = 0;
         if (strncmp(data, "  ", 2) == 0) {
@@ -378,6 +385,8 @@ int input_data (FILE * fd)
 
     else if (strncmp("DGER", excode, EXCODE_LENGHT) == 0) {
 
+      nger = 0;
+
       for (;;) {
         
         do {
@@ -390,6 +399,38 @@ int input_data (FILE * fd)
         if (strncmp(line, "9999", 4) == 0) {
           break;
         }
+
+        line[strlen(line)-1] = ' ';
+
+        sptr = line;
+        strncpy(data, sptr, 4); data[4] = 0;
+        if (strncmp(data, "    ", 4) == 0) {
+          printf("Bar number field is mandatory.\n");
+          return -1;
+        }
+        else {
+          dger[nger].id = atoi(data);
+        }
+
+        sptr = line + 7;
+        strncpy(data, sptr, 5); data[5] = 0;
+        if (strncmp(data, "     ", 5) == 0) {
+          dger[nger].pmn = 0.;
+        }
+        else {
+          dger[nger].pmn = atof(data) / base;
+        }
+
+        sptr = line + 13;
+        strncpy(data, sptr, 5); data[5] = 0;
+        if (strncmp(data, "     ", 5) == 0) {
+          dger[nger].pmx = 0.;
+        }
+        else {
+          dger[nger].pmx = atof(data) / base;
+        }
+
+        nger++;
       }
     }
 

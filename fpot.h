@@ -38,20 +38,29 @@ typedef struct {
   double tmx;
 } dlin_t;
 
+typedef struct 
+{
+  int id;
+  double pmn;
+  double pmx;
+} dger_t;
+  
 #define pow2(x) ((x) * (x))
 
 extern char titu[LINE_LENGHT];
 
 extern double tepa;
 extern double tepr;
-extern int base;
+extern double base;
 extern int acit;
 
 extern dbar_t dbar[LENGHT];
 extern dlin_t dlin[LENGHT];
+extern dger_t dger[LENGHT];
 
 extern int nbar;
 extern int nlin;
+extern int nger;
 extern int npv;
 extern int npq;
 

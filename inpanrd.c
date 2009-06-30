@@ -187,7 +187,8 @@ int input_data (FILE * fd)
         else {
           sscanf(data, "%lf", &dbar[nbar].qn);
         }
-
+        dbar[nbar].qn /= base;
+        
         sptr = line + 45;
         strncpy(data, sptr, 5); data[5] = 0;
         if (strncmp(data, "     ", 5) == 0) {
@@ -201,7 +202,8 @@ int input_data (FILE * fd)
         else {
           sscanf(data, "%lf", &dbar[nbar].qm);
         }
-
+        dbar[nbar].qm /= base;
+        
         sptr = line + 50;
         strncpy(data, sptr, 5); data[5] = 0;
         if (strncmp(data, "     ", 5) == 0) {

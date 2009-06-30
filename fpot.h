@@ -11,7 +11,7 @@ typedef struct {
   int id;
   int type;
   char base;
-  char *name[NAME_LENGHT];
+  char name[NAME_LENGHT];
   char group;
   double voltage;
   double phase;

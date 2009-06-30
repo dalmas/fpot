@@ -58,22 +58,6 @@ int get_index(int id)
   return -1;
 }
 
-
-int get_dger_index(int id)
-{
-  int i;
-
-  for (i = 0; i < nger; i++) {
-    if (dger[i].id == id) {
-      return i;
-    }
-  }
-
-  return -1;
-}
-
-
-
 int formyb()
 {
   int index, i, j;
@@ -118,26 +102,6 @@ int formyb()
 
 
   }
-
-#if 0
-  {
-    int i, j;
-
-    for (i = 0; i < nbar; i++) {
-      for (j = 0; j < nbar; j++) {
-        if ((yg[i][j] != 0.) || (yb[i][j] != 0.)) {
-          printf("(%+.3lf %+.3lfj) ", yg[i][j], yb[i][j]);
-        }
-        else {
-          printf("                 ");
-        }
-        
-      }
-      printf("\n");
-    }
-  }
-#endif
-  
   
   return 0;
 }
@@ -145,7 +109,7 @@ int formyb()
 int formb()
 {
   int index, b1i, b2i;
-  int row,col;
+  int row, col, i;
   
   memset(b1, 0, sizeof(yg));
   memset(b2, 0, sizeof(yb));
@@ -169,28 +133,42 @@ int formb()
     }
   }
 
+  for (col = 0; col < (npv+npq); col++) {
+
+    for (row = col + 1; row < (npv+npq); row++) {
+      
+      if (b1[row][col] != 0.) {
+
+        b1[row][col] = b1[row][col] / b1[col][col];
+
+        for (i = row; i < (npv+npq); i++) {
+          b1[row][i] -= b1[row][col] * b1[col][i];
+        }
+      }
+    }
+  }
+
+
   for (row = 0; row < npq; row++) {
     for (col = 0; col < npq; col++) {
       b2[row][col] = -yb2[get_index(b2id[row])][get_index(b2id[col])];
     }
   }
 
-#if 0
-  for (row = 0; row < (npv+npq); row++) {
-    for (col = 0; col < (npv+npq); col++) {
-      printf("%+0.6f ", b1[row][col]);
-    }
-    printf("\n");
-  }
+  for (col = 0; col < npq; col++) {
 
-  printf("\n");
-  for (row = 0; row < npq; row++) {
-    for (col = 0; col < npq; col++) {
-      printf("%+0.6f ", b2[row][col]);
+    for (row = col + 1; row < npq; row++) {
+      
+      if (b2[row][col] != 0.) {
+
+        b2[row][col] = b2[row][col] / b2[col][col];
+
+        for (i = row; i < npq; i++) {
+          b2[row][i] -= b2[row][col] * b2[col][i];
+        }
+      }
     }
-    printf("\n");
   }
-#endif
   
   return 0;
 }
@@ -219,33 +197,19 @@ int getdth()
 {
   int index;
   int n, i, j;
-  double m, r;
+  double r;
   double b[LENGHT];
-  double A[LENGHT][LENGHT];
   
   memset(dth, 0, sizeof(dth));
 
   for (i = 0; i < (npv+npq); i++) {
     index = get_index(b1id[i]);
     b[i] = dp[index];
-    for (j = 0; j < (npv+npq); j++) {
-      A[i][j] = b1[i][j];
-    }
   }
   
   for (j = 0; j < (npv+npq); j++) {
-
-    for (n = j + 1; n < (npv+npq); n++) {
-      
-      if (A[n][j] != 0.) {
-
-        m = A[n][j] / A[j][j];
-
-        for (i = j; i < (npv+npq); i++) {
-          A[n][i] = A[n][i] - (m * A[j][i]);
-        }
-        b[n] = b[n] - (m * b[j]);
-      }
+    for (n = j + 1; n < (npv+npq); n++) {  
+      b[n] = b[n] - (b1[n][j] * b[j]);
     }
   }
 
@@ -256,12 +220,10 @@ int getdth()
     r = 0.;
     
     for (j = (npv+npq) - 1; j > i; j--) {
-      r += A[i][j] * dth[get_index(b1id[j])];
+      r += b1[i][j] * dth[get_index(b1id[j])];
     }
 
-    r = b[i] - r;
-
-    dth[index] = r / A[i][i];
+    dth[index] = (b[i] - r) / b1[i][i];
   }
 
   return 0;
@@ -291,36 +253,22 @@ int getdv()
 {
   int index;
   int n, i, j;
-  double m, r;
+  double r;
   double b[LENGHT];
-  double A[LENGHT][LENGHT];
 
   memset(dv, 0, sizeof(dv));
 
   for (i = 0; i < npq; i++) {
     index = get_index(b2id[i]);
     b[i] = dq[index];
-    for (j = 0; j < npq; j++) {
-      A[i][j] = b2[i][j];
-    }
   }
-
+    
   for (j = 0; j < npq; j++) {
-
-    for (n = j + 1; n < npq; n++) {
-      
-      if (A[n][j] != 0.) {
-
-        m = -A[n][j] / A[j][j];
-
-        for (i = j; i < npq; i++) {
-          A[n][i] += m * A[j][i];
-        }
-        b[n] += m * b[j];
-      }
+    for (n = j + 1; n < npq; n++) {  
+      b[n] = b[n] - (b2[n][j] * b[j]);
     }
   }
-      
+
   for (i = npq - 1; i >= 0; i--) {
 
     index = get_index(b2id[i]);
@@ -328,12 +276,10 @@ int getdv()
     r = 0.;
     
     for (j = npq - 1; j > i; j--) {
-      r += A[i][j] * dv[get_index(b2id[j])];
+      r += b2[i][j] * dv[get_index(b2id[j])];
     }
 
-    r = b[i] - r;
-    
-    dv[index] = r / A[i][i];
+    dv[index] = (b[i] - r) / b2[i][i];
   }
 
   return 0;
@@ -441,15 +387,15 @@ int main (int argc, char **argv)
     }
 
 
-  printf("iter = %i\n\n", iter);
+  printf("\niter = %i\n", iter);
   for (i = 0; i < nbar; i++) {
     printf("%i %+0.3f\t%+0.3f\n", i, voltage[i], 180. * phase[i] / M_PI);
   }
 
 
   for (i = 0; i < nbar; i++) {
-    printf("%s %f %f\n",dbar[i].name, p[i]*base, q[i]*base);
-  }  
+    printf("%s %f %f\n", dbar[i].name, p[i]*base, q[i]*base);
+  }
 
   } while (!qconv || !pconv);
   

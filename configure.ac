@@ -1,8 +1,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
-AC_INIT([fpot], [0.1], [marcelo.dalmas@yahoo.com.br])
+AC_PREREQ([2.71])
+AC_INIT([fpot],[0.1],[marcelo.dalmas@yahoo.com.br])
 AC_CONFIG_SRCDIR([fpot.c])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
@@ -21,5 +21,6 @@ AC_CHECK_HEADERS([stdlib.h string.h])
 # Checks for library functions.
 AC_CHECK_FUNCS([memset])
 
-AC_OUTPUT([Makefile])
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
 

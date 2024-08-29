@@ -1,0 +1,65 @@
+TITU                                                                
+Sistema para estudo clássico - 9 barras - corrigido
+(DOPC 
+(Op) E (Op) E (Op) E (Op) E (Op) E (Op) E (Op) E (Op) E (Op) E (Op) E
+(QLIM D VLIM D CREM L CTAP L NEWT D RCVG L RMON L CELO L RBAR D RLIN D
+(RGER D IMPR D FILE D
+(9999
+DCTE
+(Mn) ( Val) (Mn) ( Val) (Mn) ( Val) (Mn) ( Val) (Mn) ( Val) (Mn) ( Val) 
+BASE   100. DASE   100. TEPA   0.01 EXST     4. TETP     5. TBPA     5.
+TLPP     1. TEPR   0.01 QLST     4. TLPR     1. TLPQ     2. TSBZ    .01
+TSBA     5. ASTP    .05 VSTP     5. TLVC     .1 TLTC    .01 TSFR  .1E-7
+ZMAX   500. TLPV     .5 VDVM   200. VDVN    40. TUDC   .001 TADC    .01
+PGER    30. TPST     2. VFLD    70. ZMIN   .001 HIST    470 LFIT     10
+ACIT    999 LFCV      1 DCIT     10 VSIT     10 LPIT     50 LFLP     10
+PDIT     10 LCRT     24 LPRT     60 CSTP   500.
+ICIT    999 DMAX    100 FDIV     50 ICMN    .05 VART     5. TSTP     32
+ICMV     1. APAS    90. CPAR    70. VAVT     2. VAVF     5. VMVF    15.
+VPVT     2. VPVF     5. VPMF    10. VSVF    20. VINF     1. VSUP     1.
+9999
+DBAR
+(No) O TB(   nome   )G( V)( A)( Pg)( Qg)( Qn)( Qm)( Bc)( Pl)( Ql)( Sh)(A(Cf)
+0001   2XBarra 01     1040 0.0 71.6  27.   0.  30.                    011000
+0002   1ZBarra 02     1025 9.3 163.  6.7   0.  10.                    011000
+0003   1QBarra 03     1025 4.7 85.0-10.9-12.0  12.                    011000
+0004    YBarra 04     1000-2.2                                        011000
+0005    YBarra 05     1000-4.0                         125.0 50.0     011000
+0006    YBarra 06     1000-3.7                          90.0 30.0     011000
+0007    YBarra 07     1000 3.7                                        011000
+0008    YBarra 08     1000 0.7                         100.0 35.0     011000
+0009    YBarra 09     1000 2.0                                        011000
+9999
+DLIN
+(De) O  (Pa)NcEP ( R% )( X% )(Mvar)(Tap)(Tmn)(Tmx)(Phs)( Bc)(Cn)(Ce)Ns
+0001    0004             5.76       1.00 .950 1.05
+0004    0006        1.7   9.2  15.8
+0004    0005         1.   8.5  17.6
+0005    0007        3.2  16.1  30.6
+0006    0009        3.9  17.0  35.8
+0002    0007             6.25       1.00 .950 1.05
+0007    0008       0.85   7.2  14.9
+0008    0009       1.19 10.08 20.90
+0003    0009             5.86       1.00 .950 1.05
+9999
+(=======================================================================
+( DADOS DE GERADOR ( REDESPACHO DE POTENCIA ATIVA )
+(=======================================================================
+DGER
+(No) O (Pmn) (Pmx) ( Fp) (FpR) (FPn) (Fa) (Fr) (Ag) ( Xq) (Sno)
+0001    0.00 247.5   
+0002    0.00 192.0  
+0003    0.00 128.0  
+9999
+DGLT
+(G (Vmn) (Vmx)
+ 0  0.95  1.05
+99
+DGBT
+(G ( kV)
+ X  16.5
+ Z  18.0
+ Q  13.8
+ Y  230.
+99
+FIM

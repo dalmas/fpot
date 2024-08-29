@@ -35,11 +35,12 @@ double p[LENGHT];
 double q[LENGHT];
 double dp[LENGHT];
 double dq[LENGHT];
+double phi;
 
 int print_usage()
 {
   printf("%s\n\n", PACKAGE_STRING);
-  printf("Usage:\nfpot filename\n");
+  printf("Usage:\nfpot filename phi\n");
 
   return 0;
 }
@@ -63,6 +64,7 @@ int formyb()
   int index, i, j;
   double den, g, b, sh;
   int from, to;
+  double rl, xl;
 
   memset(yg, 0, sizeof(yg));
   memset(yb, 0, sizeof(yb));
@@ -74,9 +76,12 @@ int formyb()
     from = get_index(dlin[index].from);
     to = get_index(dlin[index].to);
 
-    den = (pow2(dlin[index].r) + pow2(dlin[index].x));
-    g = dlin[index].r / den;
-    b = -dlin[index].x / den;
+    rl = ((dlin[index].r * cos(phi)) - (dlin[index].x * sin(phi)));
+    xl = ((dlin[index].r * sin(phi)) + (dlin[index].x * cos(phi)));
+    
+    den = (pow2(rl) + pow2(xl));
+    g = rl / den;
+    b = -xl / den;
     sh = 0.5 * dlin[index].b;
 
     yg[from][from] += g;
@@ -94,13 +99,11 @@ int formyb()
     yb2[from][to] += -b;
     yb2[to][from] += -b;
 
-    b = -1. / dlin[index].x;
+    b = -1. / xl;
     yb1[from][from] += b;
     yb1[to][to] += b;
     yb1[from][to] += -b;
     yb1[to][from] += -b;
-
-
   }
   
   return 0;
@@ -176,7 +179,7 @@ int formb()
 int updatedp()
 {
   int index, i, k;
-  double tetha, s;
+  double tetha, s, pl;
 
   for (i = 0; i < nbar; i++) {
 
@@ -185,9 +188,10 @@ int updatedp()
       tetha = phase[i] - phase[k];
       s += (((yg[i][k] * cos(tetha)) + (yb[i][k] * sin(tetha))) * voltage[k]);
     }
-    p[i] = (voltage[i] * s);    
+    p[i] = (voltage[i] * s);
+    pl = ((((dbar[i].pg - dbar[i].pl) / base) * cos(phi)) - (((dbar[i].qg - dbar[i].ql) / base) * sin(phi)));
 
-    dp[i] = (((dbar[i].pg - dbar[i].pl) / base) - p[i]) / voltage[i];
+    dp[i] = (pl - p[i]) / voltage[i];
   }
 
   return 0;
@@ -232,7 +236,7 @@ int getdth()
 int updatedq()
 {
   int index, i, k;
-  double tetha, s;
+  double tetha, s, ql;
 
   for (i = 0; i < nbar; i++) {
 
@@ -242,8 +246,8 @@ int updatedq()
       s += (((yg[i][k] * sin(tetha)) - (yb[i][k] * cos(tetha))) * voltage[k]);
     }
     q[i] = (voltage[i] * s);
-
-    dq[i] = (((dbar[i].qg - dbar[i].ql) / base) - q[i]) / voltage[i];
+    ql = ((((dbar[i].pg - dbar[i].pl) / base) * sin(phi)) + (((dbar[i].qg - dbar[i].ql) / base) * cos(phi)));
+    dq[i] = (ql - q[i]) / voltage[i];
   }
 
   return 0;
@@ -293,12 +297,15 @@ int main (int argc, char **argv)
   int iter;
   int pconv, qconv;
   
-  if (argc != 2) {
+  if (argc != 3) {
     print_usage();
 
     return 1;
   }
 
+  phi = atof(argv[2]);
+  phi = M_PI * phi / 180.;
+  
   fd = fopen(argv[1], "r");
   if (fd == NULL) {
     printf("Unable to open file %s.\n", argv[1]);
@@ -385,7 +392,7 @@ int main (int argc, char **argv)
         }
       }
     }
-
+  } while (!qconv || !pconv);
 
   printf("\niter = %i\n", iter);
   for (i = 0; i < nbar; i++) {
@@ -394,11 +401,10 @@ int main (int argc, char **argv)
 
 
   for (i = 0; i < nbar; i++) {
-    printf("%s %f %f\n", dbar[i].name, p[i]*base, q[i]*base);
+//    printf("%s %f %f\n", dbar[i].name, p[i]*base, q[i]*base);
+    printf("%s %f %f\n", dbar[i].name, ((p[i]*cos(phi))+(q[i]*sin(phi)))*base, ((q[i]*cos(phi))-(p[i]*sin(phi)))*base);
   }
 
-  } while (!qconv || !pconv);
-  
 
   return 0;
 }

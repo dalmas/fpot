@@ -3,8 +3,8 @@
 
 AC_PREREQ([2.71])
 AC_INIT([fpot],[0.1],[marcelo.dalmas@yahoo.com.br])
-AC_CONFIG_SRCDIR([fpot.c])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_SRCDIR([src/fpot.c])
+AC_CONFIG_HEADERS([src/config.h])
 AM_INIT_AUTOMAKE
 
 # Checks for programs.
@@ -21,6 +21,6 @@ AC_CHECK_HEADERS([stdlib.h string.h])
 # Checks for library functions.
 AC_CHECK_FUNCS([memset])
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
 AC_OUTPUT
 

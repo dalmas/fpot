@@ -1,121 +1,257 @@
-# Capacidade
+# Manual de dados de entrada do FLP
 
-|Descrição | Número de elementos |
-|----------|---------------------|
-| Barras   | 1000                |
-| Linhas   | 1000                |
-| Geração  | 1000                |
+Este documento resume o formato do arquivo de entrada suportado pelo parser implementado em `src/inpanrd.c`. O escopo aqui descrito é restrito ao que realmente é lido e interpretado pelo programa; blocos não implementados ou apenas reconhecidos para avançar o arquivo são destacados como tal.
 
-<!--------------------------------------------------------------------------------------->
+## Capacidade
 
-# Códigos de execução
+| Descrição | Número de elementos |
+|-----------|---------------------|
+| Barras    | 1000                |
+| Linhas    | 1000                |
+| Geração   | 1000                |
 
-|Código | Descrição                                   |
-|-------|---------------------------------------------|
-|TITU   | Leitura do título.                          |
-|DCTE   | Leitura/modificação de dados de constantes. |
-|DBAR   | Leitura dos dados de barra CA.              |
-|DLIN   | Leitura dos dados de circuito CA.           |
-|DGER   | Leitura dos dados de barra de geração.      |
-|DGBT   | Leitura dos dados de grupo base de tensão.  |
-|FIM    | Término de execução.                        | 
+## Códigos de execução suportados
 
-<!--------------------------------------------------------------------------------------->
+| Código | Descrição | Status no parser |
+|--------|-----------|------------------|
+| TITU   | Leitura do título do caso. | Implementado |
+| DCTE   | Leitura/modificação de constantes do problema. | Implementado |
+| DBAR   | Leitura dos dados de barra CA. | Implementado |
+| DLIN   | Leitura dos dados de circuito CA. | Implementado |
+| DGER   | Leitura dos limites de geração ativa. | Implementado |
+| DGLT   | Limites de tensão por grupo. | Reconhecido, mas não processado |
+| DGBT   | Dados de grupo base de tensão. | Reconhecido, mas não processado |
+| FIM    | Término de execução. | Implementado |
+
+## Observações gerais sobre a leitura
+
+- O arquivo de entrada é processado em linhas de texto com comprimento máximo de 80 caracteres (`LINE_LENGHT = 80`).
+- Linhas iniciadas por `(` são ignoradas como comentários.
+- O parser usa a primeira palavra da linha para identificar o código de execução (`sscanf(line, "%s", excode);`).
+- O bloco `DCTE` termina ao encontrar `9999` na primeira coluna da linha.
+- Os blocos de barras e circuitos terminam ao encontrar `9999` na primeira coluna da linha.
+- `DGLT` e `DGBT` são aceitos apenas para consumir registros até o terminador `99` e não são convertidos em estruturas internas.
 
 ## TITU
 
-Leitura do título do caso em estudo. 
+### Objetivo
 
-<!--------------------------------------------------------------------------------------->
-
-## DCTE Constantes
-
-| Campo | Descrição                                                        | Default   |
-|-------|------------------------------------------------------------------|-----------|
-| TEPA  | Tolerância de convergência do erro de potência ativa na barra.   | 1.0 MW    |
-| TEPR  | Tolerância de convergência do erro de potência reativa na barra. | 1 Mvar    |
-| BASE  | Base de potência para o sistema CA.                              | 100.0 MVA |
-| ACIT  | Número máximo de iterações na solução do fluxo de potência CA.   | 30        |
+Ler o título do caso em estudo.
 
 ### Conjunto de dados
 
-1. Código DCTE
-1. Constantes
-1. 9999 nas colunas 1-4 indicando fim de dados
+1. Cartão com o código `TITU` nas colunas 1-4.
+2. Cartão seguinte contendo a identificação do caso.
 
-### Formato dos Dados
+### Formato
 
-| Campo     | Colunas                                            | Descrição                                                            |
-|-----------|----------------------------------------------------|----------------------------------------------------------------------|
-| Mnmônico  | 01-04<br>13-16<br>25-28<br>37-40<br>49-52<br>61-64 | Mnemônicos correspondentes às constantes a serem modificadas.        |
-| Constante | 06-11<br>18-23<br>30-35<br>42-47<br>54-59<br>66-71 | Constantes associadas aos mnemônicos definido no campo do Mnemônico. |
+| Campo | Colunas | Descrição |
+|-------|---------|-----------|
+| Título do caso | 1-80 | Texto livre usado como identificação do estudo. |
 
-<!--------------------------------------------------------------------------------------->
+O programa lê a linha imediatamente após `TITU` e a copia para a variável global `titu`.
 
-## DBAR Barras CA
+## DCTE
 
-Leitura dos dados de barra CA. 
+### Objetivo
 
-### Conjunto de dados
-
-1. Código DBAR
-1. Dados da barra
-1. 9999 nas colunas 1-4 indicando fim de dados
-
-### Formato dos Dados
-
-| Campo | Colunas | Descrição | Default | Observação |
-|-------|---------|-----------|---------|------------|
-|Número |01-05    |Número de identificação da barra CA | | |
-|Operação| 06-06 | A ou 0 - adição de dados de barra.<br>E ou 1 - eliminação de dados da barra.<br>M ou 2 - modificação de dados da barra. | A | |
-
-<!--------------------------------------------------------------------------------------->
-
-## DLIN 
-
-Leitura dos dados de circuito CA.
+Alterar ou inicializar os valores das constantes internas do programa.
 
 ### Conjunto de dados
 
-1. Código DLIN
+1. Código `DCTE`.
+2. Um ou mais pares `mnemonico valor`.
+3. Registro `9999` como fim do bloco.
 
-### Formato dos Dados
+### Constantes reconhecidas
 
-| Campo | Colunas | Descrição | Default | Observação |
-|-------|---------|-----------|---------|------------|
+| Mnemonico | Significado | Valor inicial no código |
+|-----------|-------------|------------------------|
+| `TEPA` | Tolerância para erro de potência ativa. | `1 / base` |
+| `TEPR` | Tolerância para erro de potência reativa. | `1 / base` |
+| `BASE` | Base de potência do sistema CA. | `100.0` |
+| `ACIT` | Número máximo de iterações do fluxo CA. | `30` |
 
-<!--------------------------------------------------------------------------------------->
+### Formato dos dados
+
+A leitura é feita em blocos de 12 posições, em sequência, interpretando `mnemônico` e `valor` em cada trecho. A estrutura esperada é do tipo:
+
+`MNEMÔNICO VALOR MNEMÔNICO VALOR ...`
+
+No código, o parser faz uma leitura sequencial com `sscanf(&line[i], "%s %lf", mnm, &cte)` e incrementa `i += 12` após cada par.
+
+### Observações
+
+- O programa somente reconhece os mnemonicos `TEPA`, `TEPR`, `BASE` e `ACIT`.
+- Qualquer outro mnemônico em `DCTE` é ignorado.
+- O valor da base de potência também afeta o cálculo de grandezas escalares em blocos posteriores, como `dbar[nbar].qn`, `qm`, `sh` e `dlin[nlin].b`.
+
+## DBAR
+
+### Objetivo
+
+Definir as barras do sistema CA.
+
+### Conjunto de dados
+
+1. Código `DBAR`.
+2. Dados de uma ou mais barras.
+3. Registro `9999` como fim do bloco.
+
+### Formato da linha
+
+A linha é interpretada em posições fixas. O parser exige o campo de número da barra em 1-4; se estiver em branco, a leitura falha com mensagem `Bar number field is mandatory.`
+
+| Campo | Colunas | Descrição |
+|-------|---------|-----------|
+| `id` | 1-4 | Número da barra. |
+| `operação` | 6 | Operação da barra. Aceita espaço, `A` ou `0`; `E`/`1`/`M`/`2` geram erro “not implemented”. |
+| `tipo` | 8 | Tipo da barra: `0` = PQ, `1` = PV, `2` = slack, `3` = PQ com comportamento especial. |
+| `base` | 9 | Letra da base da barra (`0` se vazio). |
+| `nome` | 10-21 | Nome da barra (12 caracteres). |
+| `group` | 22 | Grupo da barra (`0` se vazio). |
+| `voltage` | 23-26 | Tensão nominal em kV, lida em `0.001 * atoi(...)`. |
+| `phase` | 27-30 | Ângulo em graus, convertido para radianos com `M_PI * phase / 180`. |
+| `pg` | 31-35 | Geração ativa, em MW. |
+| `qg` | 36-40 | Geração reativa, em Mvar. |
+| `qn` | 41-45 | Limite inferior de potência reativa. Se vazio, assume `0.` ou `-9999.` para barras tipo 2. |
+| `qm` | 46-50 | Limite superior de potência reativa. Se vazio, assume `0.` ou `9999.` para barras tipo 2. |
+| `bc` | 51-55 | Código da barra de conexão; se vazio, usa o próprio número da barra. |
+| `pl` | 56-60 | Carga ativa. |
+| `ql` | 61-65 | Carga reativa. |
+| `sh` | 66-70 | Carga de shunt. |
+| `area` | 71-72 | Área da barra. |
+| `cf` | 73-76 | Fator de correção, lido em `0.001 * atoi(...)`. |
+
+### Tipos de barra suportados
+
+| Valor em coluna 8 | Tipo interno | Significado |
+|------------------|-------------|-------------|
+| `0` | `0` | PQ |
+| `1` | `1` | PV |
+| `2` | `2` | Slack |
+| `3` | `3` | PQ com outra semântica (aceita em leitura) |
+
+### Observações
+
+- `npv`, `npq` e `nbar` são reinicializados no começo do bloco.
+- O programa aceita apenas operação vazia, `A` ou `0`; qualquer operação de exclusão ou modificação (`E`, `1`, `M`, `2`) gera erro.
+- `qn` e `qm` são convertidos para p.u. dividindo por `base`.
+- `sh` também é convertido para p.u. dividindo por `base`.
+
+## DLIN
+
+### Objetivo
+
+Definir os circuitos do sistema CA.
+
+### Conjunto de dados
+
+1. Código `DLIN`.
+2. Um ou mais registros de circuito.
+3. Registro `9999` como fim do bloco.
+
+### Formato da linha
+
+| Campo | Colunas | Descrição |
+|-------|---------|-----------|
+| `from` | 1-4 | Barra de origem. |
+| `operação` | 6 | Operação do circuito. Aceita espaço, `A` ou `0`; `E`/`1`/`M`/`2` geram erro. |
+| `to` | 9-12 | Barra de destino. |
+| `r` | 17-22 | Resistência em % (`0.01 * atof(...)` se informado). |
+| `x` | 23-28 | Reatância em % (`0.01 * atof(...)` se informado). |
+| `b` | 29-34 | Susceptância, dividida por `base` quando informada (`atof(data) / base`). |
+| `tap` | 35-39 | Tap do transformador. |
+| `tmn` | 40-44 | Limite mínimo do tap. |
+| `tmx` | 45-49 | Limite máximo do tap. |
+
+### Observações
+
+- Caso algum campo de resistência, reatância ou susceptância esteja em branco, o valor lido é `0.`.
+- O programa também interpreta `tap`, `tmn` e `tmx` como valores em ponto flutuante, sem validação adicional.
+- Há uma repetição no código para `tmn`, onde o mesmo trecho do arquivo é lido duas vezes; o comportamento final é o mesmo.
 
 ## DGER
 
-Leitura dos dados de barra de geração.
+### Objetivo
+
+Ler os limites de geração ativa de cada gerador.
 
 ### Conjunto de dados
 
-1. Código DGER
+1. Código `DGER`.
+2. Um ou mais registros de geração.
+3. Registro `9999` como fim do bloco.
 
-### Formato dos Dados
+### Formato da linha
 
-| Campo | Colunas | Descrição | Default | Observação |
-|-------|---------|-----------|---------|------------|
+| Campo | Colunas | Descrição |
+|-------|---------|-----------|
+| `id` | 1-4 | Número do gerador (identificador da barra). |
+| `pmn` | 8-12 | Limite mínimo de geração ativa. Se vazio, assume `0.`; divide por `base`. |
+| `pmx` | 14-18 | Limite máximo de geração ativa. Se vazio, assume `0.`; divide por `base`. |
 
-<!--------------------------------------------------------------------------------------->
+O parser armazena esses valores na estrutura `dger_t` e contabiliza `nger`.
+
+## DGLT
+
+### Objetivo
+
+Bloco de limites de tensão por grupo, conforme a especificação do FLUPOT.
+
+### Status no código
+
+O parser reconhece o código `DGLT`, mas não lê nem armazena seus campos em estruturas. Ele apenas percorre as linhas até encontrar o terminador `99`:
+
+```c
+if (strncmp(line, "99", 2) == 0) {
+  break;
+}
+```
+
+Portanto, o bloco é aceito para permitir a continuidade da leitura do arquivo, mas não há implementação completa para os dados de `DGLT`.
 
 ## DGBT
 
-Leitura dos dados de grupo base de tensão.
+### Objetivo
 
-### Conjunto de dados
+Bloco de grupos base de tensão.
 
-1. Código DGBT
+### Status no código
 
-### Formato dos Dados
+Assim como em `DGLT`, o parser reconhece `DGBT`, mas não interpreta os campos do registro. Ele apenas ignora linhas até encontrar o terminador `99`.
 
-| Campo | Colunas | Descrição | Default | Observação |
-|-------|---------|-----------|---------|------------|
-
-<!--------------------------------------------------------------------------------------->
+Portanto, neste programa, `DGBT` não é convertido em dados internos nem usado em cálculos.
 
 ## FIM
 
-Término de execução.
+### Objetivo
+
+Encerrar a leitura do arquivo de entrada.
+
+Quando o código `FIM` é identificado, a função `input_data()` retorna `0`, indicando leitura concluída com sucesso.
+
+## Exemplo mínimo de arquivo
+
+```text
+TITU
+Sistema exemplo
+DCTE
+BASE   100. TEPA   0.01 TEPR   0.01 ACIT   30
+9999
+DBAR
+0001   2 ...
+...
+9999
+DLIN
+0001    0004      5.76       1.00
+...
+9999
+DGER
+0001    0.00 247.5
+...
+9999
+FIM
+```
+
+Este exemplo ilustra a estrutura geral dos blocos; os dados reais são processados por coluna e não por nomes de campos em texto livre.

@@ -1,207 +1,207 @@
-# Manual de dados de entrada do FLP
+# Input Data Manual
 
-Este documento resume o formato do arquivo de entrada suportado pelo parser implementado em `src/inpanrd.c`. O escopo aqui descrito é restrito ao que realmente é lido e interpretado pelo programa; blocos não implementados ou apenas reconhecidos para avançar o arquivo são destacados como tal.
+This document summarizes the input file format supported by the parser implemented in `src/inpanrd.c`. It describes only what the program actually reads and interprets; unsupported blocks and blocks that are recognized only to advance through the file are identified as such.
 
-## Capacidade
+## Capacity
 
-| Descrição | Número de elementos |
-|-----------|---------------------|
-| Barras    | 1000                |
-| Linhas    | 1000                |
-| Geração   | 1000                |
+| Description | Number of elements |
+|-------------|--------------------|
+| Buses       | 1000               |
+| Lines       | 1000               |
+| Generators  | 1000               |
 
-## Códigos de execução suportados
+## Supported execution codes
 
-| Código | Descrição | Status no parser |
-|--------|-----------|------------------|
-| TITU   | Leitura do título do caso. | Implementado |
-| DCTE   | Leitura/modificação de constantes do problema. | Implementado |
-| DBAR   | Leitura dos dados de barra CA. | Implementado |
-| DLIN   | Leitura dos dados de circuito CA. | Implementado |
-| DGER   | Leitura dos limites de geração ativa. | Implementado |
-| DGLT   | Limites de tensão por grupo. | Reconhecido, mas não processado |
-| DGBT   | Dados de grupo base de tensão. | Reconhecido, mas não processado |
-| FIM    | Término de execução. | Implementado |
+| Code | Description | Parser status |
+|------|-------------|---------------|
+| TITU | Read the case title. | Implemented |
+| DCTE | Read or modify problem constants. | Implemented |
+| DBAR | Read AC bus data. | Implemented |
+| DLIN | Read AC circuit data. | Implemented |
+| DGER | Read active generation limits. | Implemented |
+| DGLT | Voltage limits by group. | Recognized, but not processed |
+| DGBT | Base-voltage group data. | Recognized, but not processed |
+| FIM  | End processing. | Implemented |
 
-## Observações gerais sobre a leitura
+## General parsing notes
 
-- O arquivo de entrada é processado em linhas de texto com comprimento máximo de 80 caracteres (`LINE_LENGHT = 80`).
-- Linhas iniciadas por `(` são ignoradas como comentários.
-- O parser usa a primeira palavra da linha para identificar o código de execução (`sscanf(line, "%s", excode);`).
-- O bloco `DCTE` termina ao encontrar `9999` na primeira coluna da linha.
-- Os blocos de barras e circuitos terminam ao encontrar `9999` na primeira coluna da linha.
-- `DGLT` e `DGBT` são aceitos apenas para consumir registros até o terminador `99` e não são convertidos em estruturas internas.
+- The input file is processed as text lines with a maximum length of 80 characters (`LINE_LENGHT = 80`).
+- Lines beginning with `(` are ignored as comments.
+- The parser uses the first word on each line to identify the execution code (`sscanf(line, "%s", excode);`).
+- The `DCTE` block ends when `9999` is found in the first column.
+- Bus and circuit blocks end when `9999` is found in the first column.
+- `DGLT` and `DGBT` are accepted only to consume records up to the `99` terminator; their data is not stored in internal structures.
 
 ## TITU
 
-### Objetivo
+### Purpose
 
-Ler o título do caso em estudo.
+Read the title of the case being studied.
 
-### Conjunto de dados
+### Records
 
-1. Cartão com o código `TITU` nas colunas 1-4.
-2. Cartão seguinte contendo a identificação do caso.
+1. A record with the `TITU` code in columns 1-4.
+2. The following record contains the case identifier.
 
-### Formato
+### Format
 
-| Campo | Colunas | Descrição |
-|-------|---------|-----------|
-| Título do caso | 1-80 | Texto livre usado como identificação do estudo. |
+| Field | Columns | Description |
+|-------|---------|-------------|
+| Case title | 1-80 | Free text used to identify the study. |
 
-O programa lê a linha imediatamente após `TITU` e a copia para a variável global `titu`.
+The program reads the line immediately after `TITU` and copies it to the global variable `titu`.
 
 ## DCTE
 
-### Objetivo
+### Purpose
 
-Alterar ou inicializar os valores das constantes internas do programa.
+Set or initialize the program's internal constants.
 
-### Conjunto de dados
+### Records
 
-1. Código `DCTE`.
-2. Um ou mais pares `mnemonico valor`.
-3. Registro `9999` como fim do bloco.
+1. The `DCTE` code.
+2. One or more `mnemonic value` pairs.
+3. The `9999` record marks the end of the block.
 
-### Constantes reconhecidas
+### Recognized constants
 
-| Mnemonico | Significado | Valor inicial no código |
-|-----------|-------------|------------------------|
-| `TEPA` | Tolerância para erro de potência ativa. | `1 / base` |
-| `TEPR` | Tolerância para erro de potência reativa. | `1 / base` |
-| `BASE` | Base de potência do sistema CA. | `100.0` |
-| `ACIT` | Número máximo de iterações do fluxo CA. | `30` |
+| Mnemonic | Meaning | Initial value in code |
+|----------|---------|-----------------------|
+| `TEPA` | Active power error tolerance. | `1 / base` |
+| `TEPR` | Reactive power error tolerance. | `1 / base` |
+| `BASE` | AC system power base. | `100.0` |
+| `ACIT` | Maximum number of AC power-flow iterations. | `30` |
 
-### Formato dos dados
+### Data format
 
-A leitura é feita em blocos de 12 posições, em sequência, interpretando `mnemônico` e `valor` em cada trecho. A estrutura esperada é do tipo:
+The data is read sequentially in 12-character segments, interpreting a `mnemonic` and `value` in each segment. The expected layout is:
 
-`MNEMÔNICO VALOR MNEMÔNICO VALOR ...`
+`MNEMONIC VALUE MNEMONIC VALUE ...`
 
-No código, o parser faz uma leitura sequencial com `sscanf(&line[i], "%s %lf", mnm, &cte)` e incrementa `i += 12` após cada par.
+The parser reads each pair sequentially with `sscanf(&line[i], "%s %lf", mnm, &cte)` and increments `i += 12` after each pair.
 
-### Observações
+### Notes
 
-- O programa somente reconhece os mnemonicos `TEPA`, `TEPR`, `BASE` e `ACIT`.
-- Qualquer outro mnemônico em `DCTE` é ignorado.
-- O valor da base de potência também afeta o cálculo de grandezas escalares em blocos posteriores, como `dbar[nbar].qn`, `qm`, `sh` e `dlin[nlin].b`.
+- The program recognizes only the `TEPA`, `TEPR`, `BASE`, and `ACIT` mnemonics.
+- Any other mnemonic in `DCTE` is ignored.
+- The power base also affects the calculation of scalar values in later blocks, including `dbar[nbar].qn`, `qm`, `sh`, and `dlin[nlin].b`.
 
 ## DBAR
 
-### Objetivo
+### Purpose
 
-Definir as barras do sistema CA.
+Define the AC system buses.
 
-### Conjunto de dados
+### Records
 
-1. Código `DBAR`.
-2. Dados de uma ou mais barras.
-3. Registro `9999` como fim do bloco.
+1. The `DBAR` code.
+2. One or more bus records.
+3. The `9999` record marks the end of the block.
 
-### Formato da linha
+### Line format
 
-A linha é interpretada em posições fixas. O parser exige o campo de número da barra em 1-4; se estiver em branco, a leitura falha com mensagem `Bar number field is mandatory.`
+The line is interpreted using fixed column positions. The parser requires the bus number in columns 1-4; if this field is blank, reading fails with the message `Bar number field is mandatory.`
 
-| Campo | Colunas | Descrição |
-|-------|---------|-----------|
-| `id` | 1-4 | Número da barra. |
-| `operação` | 6 | Operação da barra. Aceita espaço, `A` ou `0`; `E`/`1`/`M`/`2` geram erro “not implemented”. |
-| `tipo` | 8 | Tipo da barra: `0` = PQ, `1` = PV, `2` = slack, `3` = PQ com comportamento especial. |
-| `base` | 9 | Letra da base da barra (`0` se vazio). |
-| `nome` | 10-21 | Nome da barra (12 caracteres). |
-| `group` | 22 | Grupo da barra (`0` se vazio). |
-| `voltage` | 23-26 | Tensão nominal em kV, lida em `0.001 * atoi(...)`. |
-| `phase` | 27-30 | Ângulo em graus, convertido para radianos com `M_PI * phase / 180`. |
-| `pg` | 31-35 | Geração ativa, em MW. |
-| `qg` | 36-40 | Geração reativa, em Mvar. |
-| `qn` | 41-45 | Limite inferior de potência reativa. Se vazio, assume `0.` ou `-9999.` para barras tipo 2. |
-| `qm` | 46-50 | Limite superior de potência reativa. Se vazio, assume `0.` ou `9999.` para barras tipo 2. |
-| `bc` | 51-55 | Código da barra de conexão; se vazio, usa o próprio número da barra. |
-| `pl` | 56-60 | Carga ativa. |
-| `ql` | 61-65 | Carga reativa. |
-| `sh` | 66-70 | Carga de shunt. |
-| `area` | 71-72 | Área da barra. |
-| `cf` | 73-76 | Fator de correção, lido em `0.001 * atoi(...)`. |
+| Field | Columns | Description |
+|-------|---------|-------------|
+| `id` | 1-4 | Bus number. |
+| `operation` | 6 | Bus operation. A blank, `A`, or `0` is accepted; `E`/`1`/`M`/`2` produce a “not implemented” error. |
+| `type` | 8 | Bus type: `0` = PQ, `1` = PV, `2` = slack, `3` = PQ with special behavior. |
+| `base` | 9 | Bus base letter (`0` if blank). |
+| `name` | 10-21 | Bus name (12 characters). |
+| `group` | 22 | Bus group (`0` if blank). |
+| `voltage` | 23-26 | Nominal voltage in kV, read as `0.001 * atoi(...)`. |
+| `phase` | 27-30 | Angle in degrees, converted to radians with `M_PI * phase / 180`. |
+| `pg` | 31-35 | Active generation, in MW. |
+| `qg` | 36-40 | Reactive generation, in Mvar. |
+| `qn` | 41-45 | Lower reactive power limit. If blank, defaults to `0.` or `-9999.` for type 2 buses. |
+| `qm` | 46-50 | Upper reactive power limit. If blank, defaults to `0.` or `9999.` for type 2 buses. |
+| `bc` | 51-55 | Connection bus code; if blank, the bus number itself is used. |
+| `pl` | 56-60 | Active load. |
+| `ql` | 61-65 | Reactive load. |
+| `sh` | 66-70 | Shunt load. |
+| `area` | 71-72 | Bus area. |
+| `cf` | 73-76 | Correction factor, read as `0.001 * atoi(...)`. |
 
-### Tipos de barra suportados
+### Supported bus types
 
-| Valor em coluna 8 | Tipo interno | Significado |
-|------------------|-------------|-------------|
+| Value in column 8 | Internal type | Meaning |
+|-------------------|---------------|---------|
 | `0` | `0` | PQ |
 | `1` | `1` | PV |
 | `2` | `2` | Slack |
-| `3` | `3` | PQ com outra semântica (aceita em leitura) |
+| `3` | `3` | PQ with different semantics (accepted on input) |
 
-### Observações
+### Notes
 
-- `npv`, `npq` e `nbar` são reinicializados no começo do bloco.
-- O programa aceita apenas operação vazia, `A` ou `0`; qualquer operação de exclusão ou modificação (`E`, `1`, `M`, `2`) gera erro.
-- `qn` e `qm` são convertidos para p.u. dividindo por `base`.
-- `sh` também é convertido para p.u. dividindo por `base`.
+- `npv`, `npq`, and `nbar` are reset at the beginning of the block.
+- The program accepts only a blank operation, `A`, or `0`; any delete or modify operation (`E`, `1`, `M`, `2`) produces an error.
+- `qn` and `qm` are converted to per-unit values by dividing by `base`.
+- `sh` is also converted to a per-unit value by dividing by `base`.
 
 ## DLIN
 
-### Objetivo
+### Purpose
 
-Definir os circuitos do sistema CA.
+Define the circuits in the AC system.
 
-### Conjunto de dados
+### Records
 
-1. Código `DLIN`.
-2. Um ou mais registros de circuito.
-3. Registro `9999` como fim do bloco.
+1. The `DLIN` code.
+2. One or more circuit records.
+3. The `9999` record marks the end of the block.
 
-### Formato da linha
+### Line format
 
-| Campo | Colunas | Descrição |
-|-------|---------|-----------|
-| `from` | 1-4 | Barra de origem. |
-| `operação` | 6 | Operação do circuito. Aceita espaço, `A` ou `0`; `E`/`1`/`M`/`2` geram erro. |
-| `to` | 9-12 | Barra de destino. |
-| `r` | 17-22 | Resistência em % (`0.01 * atof(...)` se informado). |
-| `x` | 23-28 | Reatância em % (`0.01 * atof(...)` se informado). |
-| `b` | 29-34 | Susceptância, dividida por `base` quando informada (`atof(data) / base`). |
-| `tap` | 35-39 | Tap do transformador. |
-| `tmn` | 40-44 | Limite mínimo do tap. |
-| `tmx` | 45-49 | Limite máximo do tap. |
+| Field | Columns | Description |
+|-------|---------|-------------|
+| `from` | 1-4 | Origin bus. |
+| `operation` | 6 | Circuit operation. A blank, `A`, or `0` is accepted; `E`/`1`/`M`/`2` produce an error. |
+| `to` | 9-12 | Destination bus. |
+| `r` | 17-22 | Resistance in percent (`0.01 * atof(...)` if provided). |
+| `x` | 23-28 | Reactance in percent (`0.01 * atof(...)` if provided). |
+| `b` | 29-34 | Susceptance, divided by `base` when provided (`atof(data) / base`). |
+| `tap` | 35-39 | Transformer tap. |
+| `tmn` | 40-44 | Minimum tap limit. |
+| `tmx` | 45-49 | Maximum tap limit. |
 
-### Observações
+### Notes
 
-- Caso algum campo de resistência, reatância ou susceptância esteja em branco, o valor lido é `0.`.
-- O programa também interpreta `tap`, `tmn` e `tmx` como valores em ponto flutuante, sem validação adicional.
-- Há uma repetição no código para `tmn`, onde o mesmo trecho do arquivo é lido duas vezes; o comportamento final é o mesmo.
+- If a resistance, reactance, or susceptance field is blank, the value read is `0.`.
+- The program also interprets `tap`, `tmn`, and `tmx` as floating-point values, without additional validation.
+- The code reads `tmn` twice from the same part of the file; the final behavior is unchanged.
 
 ## DGER
 
-### Objetivo
+### Purpose
 
-Ler os limites de geração ativa de cada gerador.
+Read the active generation limits for each generator.
 
-### Conjunto de dados
+### Records
 
-1. Código `DGER`.
-2. Um ou mais registros de geração.
-3. Registro `9999` como fim do bloco.
+1. The `DGER` code.
+2. One or more generation records.
+3. The `9999` record marks the end of the block.
 
-### Formato da linha
+### Line format
 
-| Campo | Colunas | Descrição |
-|-------|---------|-----------|
-| `id` | 1-4 | Número do gerador (identificador da barra). |
-| `pmn` | 8-12 | Limite mínimo de geração ativa. Se vazio, assume `0.`; divide por `base`. |
-| `pmx` | 14-18 | Limite máximo de geração ativa. Se vazio, assume `0.`; divide por `base`. |
+| Field | Columns | Description |
+|-------|---------|-------------|
+| `id` | 1-4 | Generator number (bus identifier). |
+| `pmn` | 8-12 | Minimum active generation limit. If blank, defaults to `0.`; divided by `base`. |
+| `pmx` | 14-18 | Maximum active generation limit. If blank, defaults to `0.`; divided by `base`. |
 
-O parser armazena esses valores na estrutura `dger_t` e contabiliza `nger`.
+The parser stores these values in the `dger_t` structure and increments `nger`.
 
 ## DGLT
 
-### Objetivo
+### Purpose
 
-Bloco de limites de tensão por grupo, conforme a especificação do FLUPOT.
+Group voltage-limit block, according to the FLUPOT specification.
 
-### Status no código
+### Implementation status
 
-O parser reconhece o código `DGLT`, mas não lê nem armazena seus campos em estruturas. Ele apenas percorre as linhas até encontrar o terminador `99`:
+The parser recognizes the `DGLT` code, but does not read or store its fields in structures. It only scans the lines until it finds the `99` terminator:
 
 ```c
 if (strncmp(line, "99", 2) == 0) {
@@ -209,33 +209,33 @@ if (strncmp(line, "99", 2) == 0) {
 }
 ```
 
-Portanto, o bloco é aceito para permitir a continuidade da leitura do arquivo, mas não há implementação completa para os dados de `DGLT`.
+Therefore, the block is accepted so that the file can continue to be read, but `DGLT` data is not fully implemented.
 
 ## DGBT
 
-### Objetivo
+### Purpose
 
-Bloco de grupos base de tensão.
+Base-voltage group block.
 
-### Status no código
+### Implementation status
 
-Assim como em `DGLT`, o parser reconhece `DGBT`, mas não interpreta os campos do registro. Ele apenas ignora linhas até encontrar o terminador `99`.
+As with `DGLT`, the parser recognizes `DGBT` but does not interpret the record fields. It only skips lines until it finds the `99` terminator.
 
-Portanto, neste programa, `DGBT` não é convertido em dados internos nem usado em cálculos.
+Therefore, in this program, `DGBT` is not converted to internal data or used in calculations.
 
 ## FIM
 
-### Objetivo
+### Purpose
 
-Encerrar a leitura do arquivo de entrada.
+End reading the input file.
 
-Quando o código `FIM` é identificado, a função `input_data()` retorna `0`, indicando leitura concluída com sucesso.
+When the `FIM` code is identified, the `input_data()` function returns `0`, indicating that reading completed successfully.
 
-## Exemplo mínimo de arquivo
+## Minimal file example
 
 ```text
 TITU
-Sistema exemplo
+Example system
 DCTE
 BASE   100. TEPA   0.01 TEPR   0.01 ACIT   30
 9999
@@ -254,4 +254,4 @@ DGER
 FIM
 ```
 
-Este exemplo ilustra a estrutura geral dos blocos; os dados reais são processados por coluna e não por nomes de campos em texto livre.
+This example illustrates the general block structure; actual data is processed by column position, not by free-text field names.

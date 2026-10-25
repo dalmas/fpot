@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.71])
+AC_PREREQ([2.72])
 AC_INIT([fpot],[0.1],[marcelo.dalmas@yahoo.com.br])
 AC_CONFIG_SRCDIR([src/fpot.c])
 AC_CONFIG_HEADERS([src/config.h])

@@ -61,3 +61,13 @@ configure
 depcomp
 install-sh
 missing
+
+Makefile
+config.log
+config.status
+examples/Makefile
+src/.deps/
+src/Makefile
+src/config.h
+src/fpot
+src/stamp-h1

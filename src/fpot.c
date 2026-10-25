@@ -1,9 +1,10 @@
+#include "config.h"
+
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
 #include "fpot.h"
 
 char titu[LINE_LENGHT];

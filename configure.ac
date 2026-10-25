@@ -10,6 +10,8 @@ AM_INIT_AUTOMAKE
 # Checks for programs.
 AC_PROG_CC
 
+AC_USE_SYSTEM_EXTENSIONS
+
 # Checks for libraries.
 AC_CHECK_LIB([m],[cos])
 
